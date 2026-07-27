@@ -1,0 +1,81 @@
+name: Android Build
+on:
+  push:
+    branches: ["main", "master"]
+  workflow_dispatch:
+  repository_dispatch:
+    types: [build_apk]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Gradle Architecture
+        if: github.event.client_payload.clean_rebuild != 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.android/debug.keystore
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Pre-build Checks (Target SDK 35 & ProGuard)
+        env:
+          ENABLE_PROGUARD: "false"
+        run: |
+          find . -name "build.gradle*" -exec sed -i 's/targetSdk = 3[0-4]/targetSdk = 35/g' {} + || true
+          find . -name "build.gradle*" -exec sed -i 's/targetSdk 3[0-4]/targetSdk 35/g' {} + || true
+          find . -name "build.gradle*" -exec sed -i 's/compileSdk = 3[0-4]/compileSdk = 35/g' {} + || true
+          find . -name "build.gradle*" -exec sed -i 's/compileSdk 3[0-4]/compileSdk 35/g' {} + || true
+          if [ "$ENABLE_PROGUARD" = "true" ]; then
+            find . -name "build.gradle*" -exec sed -i 's/isMinifyEnabled = false/isMinifyEnabled = true/g' {} + || true
+            find . -name "build.gradle*" -exec sed -i 's/minifyEnabled false/minifyEnabled true/g' {} + || true
+          fi
+      - name: set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-disabled: ${{ github.event.client_payload.clean_rebuild == 'true' }}
+      - name: Regenerate Gradle Wrapper
+        run: |
+          rm -f gradle/wrapper/gradle-wrapper.jar || true
+          gradle wrapper --gradle-version 8.7 || true
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew || true
+      - name: Build with Gradle
+        env:
+          BUILD_FORMAT: "apk"
+          GRADLE_DEBUG_TASK: "assembleDebug"
+          IS_RELEASE: "false"
+        run: |
+          if [ "$IS_RELEASE" = "true" ]; then
+            if [ "$BUILD_FORMAT" = "aab" ]; then
+              GRADLE_TASK="bundleRelease"
+            else
+              GRADLE_TASK="assembleRelease"
+            fi
+          else
+            GRADLE_TASK="assembleDebug"
+          fi
+          
+          if [ -f "./gradlew" ]; then
+            ./gradlew $GRADLE_TASK
+          else
+            gradle $GRADLE_TASK
+          fi
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            build/outputs/apk/debug/*.apk
+            **/debug/*.apk
+            **/*debug*.apk
+      
