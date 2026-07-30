@@ -1,12 +1,11 @@
 plugins {
-    id("com.android.application") version "8.5.0"
-    id("org.jetbrains.kotlin.android") version "1.9.22"
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
 }
 
 android {
     namespace = "com.test.camera"
     compileSdk = 35
-
     defaultConfig {
         applicationId = "com.test.camera"
         minSdk = 21
@@ -14,13 +13,12 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
-
     buildTypes {
-        getByName("release") {
+        release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-rules.pro")
             )
         }
     }
@@ -28,4 +26,5 @@ android {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.22")
+    implementation("com.google.android.material:material:1.12.0")
 }
