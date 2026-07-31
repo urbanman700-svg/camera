@@ -35,11 +35,12 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
-    // CameraX dependencies (इसके बिना CameraSelector / PreviewView काम नहीं करेगा)
-    val cameraxVersion = "1.3.3"
-    implementation("androidx.camera:camera-core:$cameraxVersion")
-    implementation("androidx.camera:camera-camera2:$cameraxVersion")
-    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
-    implementation("androidx.camera:camera-view:$cameraxVersion")
-    implementation("com.google.common.util.concurrent:guava:32.1.3-android")
+    // AndroidX CameraX dependencies
+    implementation("androidx.camera:camera-core:1.3.4")
+    implementation("androidx.camera:camera-camera2:1.3.4")
+    implementation("androidx.camera:camera-lifecycle:1.3.4")
+    implementation("androidx.camera:camera-view:1.3.4")
+
+    // Correct Google Guava dependency for ListenableFuture
+    implementation("com.google.guava:guava:31.1-android")
 }
